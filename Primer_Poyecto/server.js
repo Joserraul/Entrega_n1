@@ -1,5 +1,6 @@
 import express from 'express';
 import productRouter from './src/router/router_ProductManager.js';
+import CartManager from './src/Cart/Cart_Manager.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
@@ -9,6 +10,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use('/api/carts', CartManager);
+
 app.use('/api/products', productRouter);
 
 app.use((req, res) => {
@@ -16,5 +19,5 @@ app.use((req, res) => {
 });
 
 
-app.listen(3000, () => console.log(`Aqui estamos corriendo en el puerto 3000`));
+app.listen(8080, () => console.log(`Aqui estamos corriendo en el puerto 8080`));
 

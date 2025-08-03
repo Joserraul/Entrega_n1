@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import fs from 'fs/promises';
 
-const CarManager = Router();
+const CartManager = Router();
 
-export default CarManager;
+export default CartManager;

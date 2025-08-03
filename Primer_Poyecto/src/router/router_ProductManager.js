@@ -64,22 +64,64 @@ router.post('/products', async (req, res) => {
 
 
 
-router.put('/products/:id', async (req, res) => {
-  try {
-    const actualizarProducto = await productManager.Actualizarproducto(parseInt(req.params.id), req.body);
-    res.json(actualizarProducto);
-  } catch (error) {
-    res.status(404).json({ error: 'Bro, no encontre ese producto, estas seguro que lo agregaste? revisa bien...😒' });
-  }
+router.put('/:pid', async (req, res) => {
+    try {
+        const id = Number(req.params.pid);
+
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'El ID debe ser un número' });
+        }
+
+        console.log('[API] Intentando actualizar producto ID:', id);
+
+        const actualizado = await productManager.Actualizarproducto(id, req.body);
+
+        res.json({
+            success: true,
+            product: actualizado
+        });
+
+    } catch (error) {
+        console.error('[API ERROR]', error);
+        res.status(404).json({
+            error: error.message,
+            existingIds: (await productManager.listarproductos()).map(p => p.id)
+        });
+    }
 });
 
-router.delete('/products/:id', async (req, res) => {
-  try {
-    const deletedProduct = await productManager.Borrarproducto(parseInt(req.params.id));
-    res.status(200).json(deletedProduct);
-  } catch (error) {
-    res.status(404).json({ error: 'Bro, no puedo borrar lo que no existe 😒' });
-  }
+
+router.delete('/:pid', async (req, res) => {
+    try {
+        const id = Number(req.params.pid);
+
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'El ID debe ser un número' });
+        }
+
+        const productoEliminado = await productManager.Borrarproducto(id);
+
+        res.json({
+            success: true,
+            message: 'Producto eliminado correctamente',
+            deletedProduct: productoEliminado
+        });
+
+    } catch (error) {
+        console.error('[DELETE ERROR]', error);
+
+        if (error.message.includes('no existe')) {
+            res.status(404).json({ 
+                error: error.message,
+                suggestion: 'Verifica los IDs disponibles con GET /api/products'
+            });
+        } else {
+            res.status(500).json({ 
+                error: 'Error al eliminar el producto',
+                details: error.message
+            });
+        }
+    }
 });
 
 

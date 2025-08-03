@@ -7,7 +7,7 @@ import fs from 'fs/promises';
  * @method guardado() - Guarda los productos en el archivo JSON.
  * @method agregarproducto(producto) - Agrega un nuevo producto al ProductManager.
  * @method listarproductos - Lista todos los productos.
- * @method Buscarproducto - Busca un producto por su ID.
+ * @method Buscarproducto - Busca un producto por su ID, usando el archivo JSON para almacenar los productos.
  * @method Actualizarproducto (id, Actualizarproducto) - Actualiza un producto por su ID.
  */
 
@@ -68,34 +68,111 @@ class ProductManager {
     return nuevoproducto;
   }
 
-  async listarproductos(){
-    return this.products;
-  }
-
-  async Buscarproducto(id) {
-    const producto = this.products.find(prod => prod.id === id);
-    if (!producto) throw new Error('crack... ese producto no lo encontre🤔');
-    return producto;
-  }
-
-  async Actualizarproducto(id, Actualizarproducto) {
-    const index = this.products.findIndex(prod => prod.id === id);
-    if (index === -1) throw new Error('crack... no puedo actualizar lo que no esta😐');
-    this.products[index] = { ...this.products[index], ...Actualizarproducto, timestamp: new Date().toISOString() };
-    await this.guardado();
-    return this.products[index];
-  }
-
-  async Borrarproducto(id) {
-    const index = this.products.findIndex(prod => prod.id === id);
-    if (index === -1) throw new Error('crack... no puedo borrar lo que no existe😒');
-
-    const exterminador = this.products.splice(index, 1);
-    await this.guardado();
-    return exterminador[0];
-  }
+async listarproductos() {
+    try {
+        const data = await fs.readFile(this.path, 'utf-8');
+        const productos = JSON.parse(data || '[]');
+        
+        this.products = productos.map(producto => ({
+            ...producto,
+            id: Number(producto.id)
+        }));
+        
+        return this.products;
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            this.products = [];
+            await this.guardado();
+            return this.products;
+        }
+        throw error;
+    }
 }
 
+  async Buscarproducto(id) {
+
+    await this.listarproductos();
+
+    const idBuscado = Number(id);
+
+    console.log('[DEBUG] Búsqueda iniciada para ID:', idBuscado);
+    console.log('[DEBUG] Productos disponibles:', this.products.map(p => ({id: p.id, type: typeof p.id})));
+
+    const producto = this.products.find(prod => {
+
+        return Number(prod.id) === idBuscado;
+    });
+
+    if (!producto) {
+        throw new Error(`Producto con ID ${idBuscado} no encontrado. IDs existentes: ${this.products.map(p => p.id)}`);
+    }
+    
+    console.log('[DEBUG] Producto encontrado:', producto);
+    return producto;
+}
+
+async Actualizarproducto(id, Update) {
+
+    await this.listarproductos();
+
+
+    const index = this.products.findIndex(prod => {
+        console.log(`[DEBUG] Buscando índice para ${id} en producto ${prod.id}`);
+        return prod.id === id;
+    });
+
+    if (index === -1) {
+        throw new Error(`ID ${id} no encontrado. IDs existentes: ${this.products.map(p => p.id)}`);
+    }
+
+
+    const camposPermitidos = ['title', 'description', 'price', 'thumbnail', 'code', 'stock'];
+    const cambios = {};
+
+    Object.keys(Update).forEach(key => {
+        if (camposPermitidos.includes(key)) {
+            cambios[key] = Update[key];
+        }
+    });
+
+    this.products[index] = {
+        ...this.products[index],
+        ...cambios,
+        id
+    };
+
+    await this.guardado();
+
+    return this.products[index];
+}
+
+async Borrarproducto(id) {
+    try {
+        await this.listarproductos();
+
+        const idABorrar = Number(id);
+        console.log('vamos a borrar ID:', idABorrar);
+
+        const index = this.products.findIndex(prod => {
+
+            return Number(prod.id) === idABorrar;
+        });
+
+        if (index === -1) {
+            throw new Error(`carck! ${idABorrar} no existe. Productos que estan disponibles son: ${this.products.map(p => p.id)}`);
+        }
+
+        const [eliminado] = this.products.splice(index, 1);
+        await this.guardado();
+
+        console.log('eliminado:', eliminado);
+        return eliminado;
+
+    } catch (error) {
+        throw error;
+    }
+}
+}
 
 
 export default ProductManager;
