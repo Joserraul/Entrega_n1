@@ -15,5 +15,6 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Bro y la ruta? 😅' });
 });
 
+
 app.listen(3000, () => console.log(`Aqui estamos corriendo en el puerto 3000`));
 

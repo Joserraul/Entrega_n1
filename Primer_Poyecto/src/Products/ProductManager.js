@@ -1,6 +1,16 @@
 import path from 'path';
 import fs from 'fs/promises';
 
+/**
+ * @class ProductManager para manejar productos
+ * @method iniciar - Inicializa el ProductManager, cargando los productos desde un archivo JSON.
+ * @method guardado() - Guarda los productos en el archivo JSON.
+ * @method agregarproducto(producto) - Agrega un nuevo producto al ProductManager.
+ * @method listarproductos - Lista todos los productos.
+ * @method Buscarproducto - Busca un producto por su ID.
+ * @method Actualizarproducto (id, Actualizarproducto) - Actualiza un producto por su ID.
+ */
+
 class ProductManager {
   constructor(filepath) {
     this.path = path.resolve(filepath);
@@ -8,7 +18,7 @@ class ProductManager {
     this.iniciar();
   }
 
-  async iniciar() {
+  async iniciar () {
     try {
       await fs.access(this.path);
       const data = await fs.readFile(this.path, 'utf-8');
