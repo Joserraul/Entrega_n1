@@ -1,8 +1,10 @@
-import { Router } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
-import ProductManager from '../Products/ProductManager.js'
 
+/**
+ * Manager para manejar carritos de compras
+ * @class CartManager
+ */
 
 class CartManager {
   constructor(filepath, productManager) {
@@ -11,6 +13,12 @@ class CartManager {
     this.productManager = productManager;
     this.iniciar();
   }
+
+
+/**
+ * Esto implementa la creacion del archivo JSON si no existe, y carga los carritos desde el archivo.
+ * @method iniciar
+ */
 
   async iniciar() {
     try {
@@ -26,9 +34,53 @@ class CartManager {
     }
   }
 
+  /**
+   * Guarda los carritos en el archivo JSON.
+   * @method guardado
+   */
+
   async guardado() {
     await fs.writeFile(this.path, JSON.stringify(this.carts, null, 2));
   }
+
+/**
+ * utiliza el metodo para crear un carrito nuevo, asignando un ID y un array de productos vacio.
+ * @method crearCarrito
+ * @returns {Object} Nuevo carrito creado
+ */
+
+  async crearCarrito() {
+  try {
+    const nuevoCarrito = {
+      id: this.carts.length > 0 ? Math.max(...this.carts.map(c => c.id)) + 1 : 1,
+      products: []
+    };
+    this.carts.push(nuevoCarrito);
+    await this.guardado();
+    return nuevoCarrito;
+  } catch (error) {
+    console.error('Error al crear carrito:', error);
+    throw error;
+  }
+}
+
+  /**
+   * Lista todos los carritos.
+   * @method listaCarts
+   * @returns {Array} Lista de carritos
+   */
+
+  async listaCarts() {
+    return this.carts;
+  }
+
+  /**
+   * Agrega un producto al carrito especificado por su ID.
+   * @method agregarProducto
+   * @param {number} cid - ID del carrito
+   * @param {number} pid - ID del producto
+   * @returns {Object} Carrito actualizado
+   */
 
   async agregarProducto(cid, pid) {
     try {
@@ -62,6 +114,13 @@ class CartManager {
       throw error;
     }
   }
+
+  /**
+   * Finaliza la compra del carrito especificado por su ID, me parecio necesario debido a que se manejan los productos, el stock y se limpia el carrito.
+   * @method compraRealizada
+   * @param {number} cid - ID del carrito
+   * @returns {Object} Resultado de la compra
+   */
 
   async compraRealizada(cid) {
     try {

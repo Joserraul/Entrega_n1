@@ -2,13 +2,10 @@ import path from 'path';
 import fs from 'fs/promises';
 
 /**
+ * 
  * @class ProductManager para manejar productos
  * @method iniciar - Inicializa el ProductManager, cargando los productos desde un archivo JSON.
  * @method guardado() - Guarda los productos en el archivo JSON.
- * @method agregarproducto(producto) - Agrega un nuevo producto al ProductManager.
- * @method listarproductos - Lista todos los productos.
- * @method Buscarproducto - Busca un producto por su ID, usando el archivo JSON para almacenar los productos.
- * @method Actualizarproducto (id, Actualizarproducto) - Actualiza un producto por su ID.
  */
 
 class ProductManager {
@@ -17,6 +14,12 @@ class ProductManager {
     this.products = [];
     this.iniciar();
   }
+
+  /**
+   * Esto implementa la creacion del archivo JSON si no existe, y carga los productos desde el archivo.
+   * @method iniciar
+   * @returns {Promise<void>}
+   */
 
   async iniciar () {
     try {
@@ -39,6 +42,12 @@ class ProductManager {
     }
   }
 
+  /**
+   * almacena los productos en el archivo JSON.
+   * @method guardado
+   * @returns {Promise<void>}
+   */
+
   async guardado() {
     try {
       await fs.mkdir(path.dirname(this.path), { recursive: true });
@@ -48,6 +57,15 @@ class ProductManager {
       throw error;
     }
   }
+
+  /**
+   *  este metodo agrega un nuevo producto al ProductManager.
+   * @method agregarproducto
+   * @param {*} producto 
+   * @returns {Promise<Object>} Nuevo producto agregado
+   * @throws {Error} Si faltan campos obligatorios o si el código del producto ya existe
+   
+   */
 
   async agregarproducto(producto) {
     if (!producto.title || !producto.code) {
@@ -68,16 +86,22 @@ class ProductManager {
     return nuevoproducto;
   }
 
+/**
+ * este metodo lista todos los productos del ProductManager para poder visualizarlos.
+ * @method listarproductos
+ * @returns {Promise<Array>} Lista de productos
+ * @throws {Error} Si ocurre un error al leer el archivo JSON
+ */
+
+
 async listarproductos() {
     try {
         const data = await fs.readFile(this.path, 'utf-8');
         const productos = JSON.parse(data || '[]');
-        
         this.products = productos.map(producto => ({
             ...producto,
             id: Number(producto.id)
         }));
-        
         return this.products;
     } catch (error) {
         if (error.code === 'ENOENT') {
@@ -88,6 +112,13 @@ async listarproductos() {
         throw error;
     }
 }
+
+/**
+ * Necesitamos buscar un producto por su ID, para poder visualizarlo.
+ * @method Buscarproducto
+  * @param {number} id - ID del producto a buscar
+  * @returns {Promise<Object>} Producto encontrado
+ */
 
   async Buscarproducto(id) {
 
@@ -106,10 +137,18 @@ async listarproductos() {
     if (!producto) {
         throw new Error(`Producto con ID ${idBuscado} no encontrado. IDs existentes: ${this.products.map(p => p.id)}`);
     }
-    
     console.log('[DEBUG] Producto encontrado:', producto);
     return producto;
 }
+
+/**
+ * no siempre se va a agregar un producto nuevo, a veces se necesita actualizar un producto existente.
+ * @method Actualizarproducto
+ * @param {number} id - ID del producto a actualizar
+ * @param {Object} Update - Objeto con los cambios a aplicar al producto
+  * @returns {Promise<Object>} Producto actualizado
+ */ 
+
 
 async Actualizarproducto(id, Update) {
 
@@ -145,6 +184,14 @@ async Actualizarproducto(id, Update) {
 
     return this.products[index];
 }
+
+/**
+ * eliminamos un producto por su ID, para poder eliminarlo de la lista de productos.
+ * @method Borrarproducto
+ * @param {number} id - ID del producto a eliminar
+ * @returns {Promise<Object>} Producto eliminado
+ * @throws {Error} Si el ID no existe o si ocurre un error al guardar los cambios
+ */
 
 async Borrarproducto(id) {
     try {

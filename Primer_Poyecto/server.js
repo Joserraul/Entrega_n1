@@ -1,6 +1,6 @@
 import express from 'express';
 import productRouter from './src/router/router_ProductManager.js';
-import CartManager from './src/Cart/Cart_Manager.js';
+import cartRouter from './src/router/router_Cart.js';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/api/carts', CartManager);
+app.use('/api/carts', cartRouter);
 
 app.use('/api/products', productRouter);
 

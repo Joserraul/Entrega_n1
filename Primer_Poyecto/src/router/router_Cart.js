@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import{CartManager} from '../Cart/Cart_Manager.js'
-import ProductManager from '../Products/ProductManager.js';
+import CartManager from '../Manager/Cart_Manager.js';
+import ProductManager from '../Manager/ProductManager.js';
 
 const router = Router();
+
 const productManager = new ProductManager('./src/data/products.json');
 const cartManager = new CartManager('./src/data/carts.json', productManager);
 
@@ -15,41 +16,22 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/:cid', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const cid = Number(req.params.cid);
-    const cart = await cartManager.obtenerCarrito(cid);
-    const productDetails = await Promise.all(
-      cart.products.map(async item => {
-
-        try {
-          const product = await productManager.Buscarproducto(item.id);
-          return {
-            ...item,
-            product: {
-              title: product.title,
-              description: product.description,
-              price: product.price,
-              thumbnail: product.thumbnail
-            }
-          };
-        } catch (error) {
-          return { ...item, error: `Producto con ID ${item.id} no encontrado` };
-        }
-      })
-    );
-    res.json({ ...cart, products: productDetails });
+    const carts = await cartManager.listaCarts();
+    res.json(carts);
   } catch (error) {
-    res.status(404).json({ error: `Carrito con ID ${req.params.cid} no encontrado` });
+    res.status(500).json({ error: error.message });
   }
 });
+
 
 router.post('/:cid/products/:pid', async (req, res) => {
   try {
     const cid = Number(req.params.cid);
     const pid = Number(req.params.pid);
 
-    const updatedCart = await cartManager.agregarProductoAlCarrito(cid, pid);
+    const updatedCart = await cartManager.agregarProducto(cid, pid);
     res.json({
       success: true,
       message: `Producto  ${pid} agregado al carrito con ID ${cid}`,
@@ -68,7 +50,7 @@ router.post('/:cid/checkout', async (req, res) => {
   try {
     const cid = Number(req.params.cid);
     const purchaseResult = await cartManager.compraRealizada(cid);
-    res.json(resultado)
+    res.json(purchaseResult);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
