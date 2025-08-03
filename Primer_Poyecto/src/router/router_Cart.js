@@ -1,64 +1,78 @@
 import { Router } from 'express';
+import{CartManager} from '../Cart/Cart_Manager.js'
+import ProductManager from '../Products/ProductManager.js';
 
 const router = Router();
+const productManager = new ProductManager('./src/data/products.json');
+const cartManager = new CartManager('./src/data/carts.json', productManager);
 
-router.get('/', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const products = await productManager.listarproductos();
-    res.json(products);
+    const newCart = await cartManager.crearCarrito();
+    res.status(201).json(newCart);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-router.post('/', async (req, res) => {
+router.get('/:cid', async (req, res) => {
   try {
-    const newProduct = await productManager.agregarproducto(req.body);
-    res.status(201).json(newProduct);
+    const cid = Number(req.params.cid);
+    const cart = await cartManager.obtenerCarrito(cid);
+    const productDetails = await Promise.all(
+      cart.products.map(async item => {
+
+        try {
+          const product = await productManager.Buscarproducto(item.id);
+          return {
+            ...item,
+            product: {
+              title: product.title,
+              description: product.description,
+              price: product.price,
+              thumbnail: product.thumbnail
+            }
+          };
+        } catch (error) {
+          return { ...item, error: `Producto con ID ${item.id} no encontrado` };
+        }
+      })
+    );
+    res.json({ ...cart, products: productDetails });
+  } catch (error) {
+    res.status(404).json({ error: `Carrito con ID ${req.params.cid} no encontrado` });
+  }
+});
+
+router.post('/:cid/products/:pid', async (req, res) => {
+  try {
+    const cid = Number(req.params.cid);
+    const pid = Number(req.params.pid);
+
+    const updatedCart = await cartManager.agregarProductoAlCarrito(cid, pid);
+    res.json({
+      success: true,
+      message: `Producto  ${pid} agregado al carrito con ID ${cid}`,
+      cart: updatedCart
+    });
+  } catch (error) {
+    if (error.message.includes('no hay disponible')) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(404).json({ error: error.message });
+  }
+}
+});
+
+router.post('/:cid/checkout', async (req, res) => {
+  try {
+    const cid = Number(req.params.cid);
+    const purchaseResult = await cartManager.compraRealizada(cid);
+    res.json(resultado)
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
-
-router.get('/pid', async (req, res) => {
-  try {
-   const product = await productManager.Buscarproducto(parseInt(req.params.id));
-    res.json(product);
-  } catch (error) {
-    res.status(404).json({ error: 'Bro, no encontre ese producto, estas seguro que lo agregaste?🤔' });
-  }
-});
-
-router.post('/pid', async (req, res) => {
-  try {
-    console.log('Body recibido:', req.body);
-
-    const { title, description, price, thumbnail, code, stock } = req.body;
-
-    if (!title || !description || !price || !code) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios' });
-    }
-
-    const newProduct = {
-      title,
-      description,
-      price,
-      thumbnail: thumbnail || '',
-      code,
-      stock: stock || 0
-    };
-
-    await productManager.agregarproducto(newProduct);
-    res.status(201).json(newProduct);
-  } catch (error) {
-    console.error('Error en POST /products:', error);
-    res.status(500).json({
-      error: 'Error al agregar el producto',
-      details: error.message
-    });
-  }
-});
-
 
 
 
