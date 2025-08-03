@@ -1,22 +1,25 @@
-import express from 'express';
 import { Router } from 'express';
 import ProductManager from '../Products/ProductManager.js';
 
 const router = Router();
-const productManager = new ProductManager('./src/data/productos.json');
+const productManager = new ProductManager('./src/data/products.json');
 
-router.use(express.json());
 
-router.get('/', (req, res) => {
-  res.json({ message: 'Aqui esta el Api de productos mi bro 🔥' });
-});
-
-router.get('/products', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const products = await productManager.listarproductos();
     res.json(products);
   } catch (error) {
-    res.status(500).json({ error: 'Bro, tenemos un problema con la lista 😖' });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/', async (req, res) => {
+  try {
+    const newProduct = await productManager.agregarproducto(req.body);
+    res.status(201).json(newProduct);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 });
 
