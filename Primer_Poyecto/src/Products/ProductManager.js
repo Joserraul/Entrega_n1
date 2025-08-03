@@ -1,4 +1,3 @@
-import { Router } from 'express';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -86,6 +85,7 @@ class ProductManager {
     return exterminador[0];
   }
 }
+
 
 
 export default ProductManager;

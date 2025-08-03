@@ -31,7 +31,7 @@ router.get('/products/:id', async (req, res) => {
 
 router.post('/products', async (req, res) => {
   try {
-    console.log('Body recibido:', req.body); 
+    console.log('Body recibido:', req.body);
 
     const { title, description, price, thumbnail, code, stock } = req.body;
 
@@ -78,5 +78,7 @@ router.delete('/products/:id', async (req, res) => {
     res.status(404).json({ error: 'Bro, no puedo borrar lo que no existe 😒' });
   }
 });
+
+
 
 export default router;
